@@ -10,6 +10,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -54,12 +55,34 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 // Returns a GIF image as a response
 func lissajousHandler(w http.ResponseWriter, r *http.Request) {
-	lissajous(w)
+	if err := r.ParseForm(); err != nil {
+		log.Print(err)
+	}
+
+	var cycles int
+	var err error
+
+	if _, ok := r.Form["cycles"]; ok {
+		cycles, err = strconv.Atoi(r.Form["cycles"][0])
+
+		if err != nil {
+			log.Print(err)
+		}
+	} else {
+		cycles = 0
+	}
+
+	lissajous(w, cycles)
 }
 
-func lissajous(out io.Writer) {
+func lissajous(out io.Writer, cyclesArg int) {
+	cycles := 5.0
+
+	if cyclesArg > 0 {
+		cycles = float64(cyclesArg)
+	}
+
 	const (
-		cycles  = 5     // number of complete x oscillator revolutions
 		res     = 0.001 // angular resolution
 		size    = 100   // image canvas covers [-size..+size]
 		nframes = 64    // number of animation frames
